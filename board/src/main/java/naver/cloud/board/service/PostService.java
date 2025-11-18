@@ -3,6 +3,7 @@ package naver.cloud.board.service;
 import lombok.RequiredArgsConstructor;
 import naver.cloud.board.domain.post.BoardType;
 import naver.cloud.board.domain.post.Post;
+import naver.cloud.board.domain.post.PostFactory;
 import naver.cloud.board.domain.post.PostRepository;
 import naver.cloud.board.domain.user.Department;
 import naver.cloud.board.domain.user.User;
@@ -37,13 +38,11 @@ public class PostService {
     public PostResponse createPost(PostCreateRequest request, User user) {
         validateDepartmentBoard(request.boardType(), user);
 
-        Post post = Post.builder()
-                .boardType(request.boardType())
-                .title(request.title())
-                .content(request.content())
-                .author(user)
-                .authorName(resolveAuthorName(request.boardType(), user))
-                .build();
+        Post post = PostFactory.create(request.boardType());
+        post.setTitle(request.title());
+        post.setContent(request.content());
+        post.setAuthor(user);
+        post.setAuthorName(resolveAuthorName(request.boardType(), user));
         return PostResponse.from(postRepository.save(post));
     }
 
