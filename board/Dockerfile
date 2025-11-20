@@ -1,16 +1,20 @@
-# 1. 런타임 이미지 (JDK 17)
-FROM eclipse-temurin:17-jdk-alpine
+# JDK 17 / 21 중 네 프로젝트에 맞게 선택
+FROM eclipse-temurin:17-jre-alpine
 
-# 2. JAR 파일 경로 (Gradle 기준)
-#   - ./gradlew bootJar 실행 시 build/libs/ 아래에 생성됨
-ARG JAR_FILE=build/libs/*.jar
+# 컨테이너 타임존 (옵션)
+ENV TZ=Asia/Seoul
 
-# 3. 컨테이너 안으로 JAR 복사
-COPY ${JAR_FILE} app.jar
-
-# 4. 컨테이너에서 열어줄 포트
+# 앱이 사용하는 포트
 EXPOSE 8080
 
-# 5. 애플리케이션 실행
-#    - 필요시 docker run 할 때 -e JAVA_OPTS로 옵션 전달 가능
-ENTRYPOINT ["sh", "-c", "java ${JAVA_OPTS:-'-Xms256m -Xmx512m'} -jar /app.jar"]
+WORKDIR /app
+
+# Gradle 빌드 기준: build/libs/*.jar
+# Maven이면 target/*.jar로 바꿔라.
+ARG JAR_FILE=build/libs/*.jar
+COPY ${JAR_FILE} app.jar
+
+# Spring Boot에서 .env를 읽게 하려면, 보통 env_file로 환경변수로 들어가므로
+# 별도 처리는 필요 없다. (docker-compose에서 env_file 사용)
+
+ENTRYPOINT ["java", "-jar", "app.jar"]
