@@ -1,20 +1,22 @@
-# JDK 17 / 21 중 네 프로젝트에 맞게 선택
+# 1단계: 빌드 (Gradle + JDK 17)
+FROM gradle:8.10.2-jdk17-alpine AS builder
+
+WORKDIR /workspace
+
+# 프로젝트 전체 복사 (src, build.gradle, settings.gradle, gradle 폴더 등)
+COPY . .
+
+# Gradle로 JAR 빌드 (컨테이너 안에서는 JDK 17 사용)
+RUN gradle clean bootJar --no-daemon
+
+# 2단계: 런타임 (JRE 17)
 FROM eclipse-temurin:17-jre-alpine
-
-# 컨테이너 타임존 (옵션)
-ENV TZ=Asia/Seoul
-
-# 앱이 사용하는 포트
-EXPOSE 8080
 
 WORKDIR /app
 
-# Gradle 빌드 기준: build/libs/*.jar
-# Maven이면 target/*.jar로 바꿔라.
-ARG JAR_FILE=build/libs/*.jar
-COPY ${JAR_FILE} app.jar
+# 1단계에서 빌드된 JAR만 가져오기
+COPY --from=builder /workspace/build/libs/*.jar app.jar
 
-# Spring Boot에서 .env를 읽게 하려면, 보통 env_file로 환경변수로 들어가므로
-# 별도 처리는 필요 없다. (docker-compose에서 env_file 사용)
+EXPOSE 8080
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["sh", "-c", "java ${JAVA_OPTS:-'-Xms256m -Xmx512m'} -jar /app.jar"]
