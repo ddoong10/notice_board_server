@@ -39,6 +39,7 @@ public class SecurityConfig {
 
                         .requestMatchers("/api/auth/register",
                                          "/api/auth/login",
+                                         "/health",
                                          "/h2-console/**").permitAll()
                         .anyRequest().authenticated()
                 )
